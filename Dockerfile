@@ -39,7 +39,5 @@ USER appuser
 
 # المنفذ الذي سيعمل عليه التطبيق
 EXPOSE 5000
-
-# تشغيل سكريبت التهيئة ثم التطبيق
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5000"]
+# ENTRYPOINT ["/app/docker-entrypoint.sh"]
+CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5000", "--log-level", "debug"]

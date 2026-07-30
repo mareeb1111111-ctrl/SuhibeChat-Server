@@ -27,7 +27,17 @@ logger = logging.getLogger(__name__)
 # إنشاء الجداول في قاعدة البيانات
 Base.metadata.create_all(bind=engine)
 
+# إعداد السجلات لتظهر فوراً
+logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
+
+app = FastAPI()
+
 app = FastAPI(title=settings.APP_NAME)
+
+
+@app.get("/")
+def read_root():
+    return {"message": "SuhibeChat is running!"}
 
 @app.middleware("http")
 async def log_all_requests(request: Request, call_next):
