@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم SuhibeChat</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        tajawal: ['Tajawal', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#8b5cf6',
+                        darkBg: '#0f172a',
+                        cardBg: 'rgba(30, 41, 59, 0.7)',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="/dashboard/style.css">
+</head>
+<body class="bg-darkBg text-slate-200 font-tajawal min-h-screen">
+    
+    <!-- Navbar -->
+    <nav class="glass-nav fixed w-full z-50 top-0 left-0 border-b border-slate-700/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/30">
+                        <i class="fa-solid fa-comments text-white text-xl"></i>
+                    </div>
+                    <span class="font-bold text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">SuhibeChat</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-sm font-medium">
+                        <span class="relative flex h-3 w-3">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                        </span>
+                        السيرفر متصل
+                    </div>
+                    <button class="text-slate-400 hover:text-white transition">
+                        <i class="fa-solid fa-globe"></i> EN
+                    </button>
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff" alt="Admin" class="w-9 h-9 rounded-full border-2 border-slate-600">
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
+        
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Users -->
+            <div class="glass-card rounded-2xl p-6 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full -mr-10 -mt-10 blur-2xl group-hover:bg-blue-500/20 transition-all duration-500"></div>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-slate-400 text-sm font-medium mb-1">إجمالي المستخدمين</p>
+                        <h3 class="text-4xl font-bold text-white" id="stat-total-users">--</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400">
+                        <i class="fa-solid fa-users text-2xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center text-sm text-green-400">
+                    <i class="fa-solid fa-arrow-trend-up ml-1"></i>
+                    <span>تحديث فوري</span>
+                </div>
+            </div>
+
+            <!-- Active Users -->
+            <div class="glass-card rounded-2xl p-6 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full -mr-10 -mt-10 blur-2xl group-hover:bg-purple-500/20 transition-all duration-500"></div>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-slate-400 text-sm font-medium mb-1">المستخدمين النشطين</p>
+                        <h3 class="text-4xl font-bold text-white" id="stat-active-users">--</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400">
+                        <i class="fa-solid fa-user-check text-2xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center text-sm text-green-400">
+                    <i class="fa-solid fa-arrow-trend-up ml-1"></i>
+                    <span>متصل الآن</span>
+                </div>
+            </div>
+
+            <!-- Messages/Sec -->
+            <div class="glass-card rounded-2xl p-6 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full -mr-10 -mt-10 blur-2xl group-hover:bg-pink-500/20 transition-all duration-500"></div>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-slate-400 text-sm font-medium mb-1">الرسائل / ثانية</p>
+                        <h3 class="text-4xl font-bold text-white" id="stat-messages">--</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-pink-500/20 flex items-center justify-center text-pink-400">
+                        <i class="fa-solid fa-paper-plane text-2xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center text-sm text-slate-400">
+                    <span>تدفق البيانات النشط</span>
+                </div>
+            </div>
+
+            <!-- Active Calls -->
+            <div class="glass-card rounded-2xl p-6 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full -mr-10 -mt-10 blur-2xl group-hover:bg-green-500/20 transition-all duration-500"></div>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-slate-400 text-sm font-medium mb-1">المكالمات النشطة</p>
+                        <h3 class="text-4xl font-bold text-white" id="stat-calls">--</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center text-green-400">
+                        <i class="fa-solid fa-phone-volume text-2xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center text-sm text-slate-400">
+                    <span>صوت و فيديو</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Server Status & Charts (Col 1-2) -->
+            <div class="lg:col-span-2 space-y-8">
+                
+                <!-- CPU & RAM Charts -->
+                <div class="glass-card rounded-2xl p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-white"><i class="fa-solid fa-server mr-2 text-primary"></i> أداء الخادوم</h2>
+                        <div class="text-sm text-slate-400" id="server-uptime">Uptime: --</div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- CPU -->
+                        <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50 relative">
+                            <div class="flex justify-between mb-2">
+                                <span class="text-sm font-medium text-slate-300">المعالج (CPU)</span>
+                                <span class="text-sm font-bold text-primary" id="cpu-text">--%</span>
+                            </div>
+                            <div class="w-full bg-slate-700 rounded-full h-2 mb-4">
+                                <div class="bg-gradient-to-r from-blue-500 to-primary h-2 rounded-full transition-all duration-500" id="cpu-bar" style="width: 0%"></div>
+                            </div>
+                            <div class="h-32">
+                                <canvas id="cpuChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- RAM -->
+                        <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50 relative">
+                            <div class="flex justify-between mb-2">
+                                <span class="text-sm font-medium text-slate-300">الذاكرة (RAM)</span>
+                                <span class="text-sm font-bold text-secondary" id="ram-text">--%</span>
+                            </div>
+                            <div class="w-full bg-slate-700 rounded-full h-2 mb-4">
+                                <div class="bg-gradient-to-r from-purple-500 to-secondary h-2 rounded-full transition-all duration-500" id="ram-bar" style="width: 0%"></div>
+                            </div>
+                            <div class="h-32">
+                                <canvas id="ramChart"></canvas>
+                            </div>
+                            <div class="text-xs text-center text-slate-400 mt-2" id="ram-details">-- / -- GB</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Traffic Chart -->
+                <div class="glass-card rounded-2xl p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-white"><i class="fa-solid fa-chart-area mr-2 text-primary"></i> تدفق البيانات والرسائل</h2>
+                    </div>
+                    <div class="h-64">
+                        <canvas id="trafficChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar (Col 3) -->
+            <div class="space-y-8">
+                <!-- Disk & Network -->
+                <div class="glass-card rounded-2xl p-6">
+                    <h2 class="text-lg font-bold text-white mb-6 border-b border-slate-700 pb-3">تخزين السيرفر</h2>
+                    <div class="mb-4">
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm font-medium text-slate-300">مساحة القرص</span>
+                            <span class="text-sm font-medium text-white" id="disk-text">--%</span>
+                        </div>
+                        <div class="w-full bg-slate-700 rounded-full h-2.5">
+                            <div class="bg-emerald-500 h-2.5 rounded-full" id="disk-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Audit Logs -->
+                <div class="glass-card rounded-2xl p-0 overflow-hidden flex flex-col h-[400px]">
+                    <div class="p-5 border-b border-slate-700/50 bg-slate-800/30 flex justify-between items-center">
+                        <h2 class="text-lg font-bold text-white"><i class="fa-solid fa-list-check mr-2 text-primary"></i> سجل الأحداث الحي</h2>
+                        <span class="flex h-2 w-2 relative">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                        </span>
+                    </div>
+                    <div class="flex-1 overflow-y-auto p-2" id="logs-container">
+                        <!-- Logs will be inserted here -->
+                        <div class="text-center text-slate-500 mt-10">في انتظار البيانات...</div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </main>
+
+    <script src="/dashboard/app.js"></script>
+</body>
+</html>
