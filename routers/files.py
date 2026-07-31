@@ -20,6 +20,9 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
         shutil.copyfileobj(file.file, buffer)
         
     file_size = os.path.getsize(file_path)
+    if file_size > 20 * 1024 * 1024:
+        os.remove(file_path)
+        raise HTTPException(status_code=400, detail="حجم الملف يتجاوز الحد المسموح (20 ميغابايت)")
     
     db_file = models.FileRecord(
         uploader_id=current_user.id,

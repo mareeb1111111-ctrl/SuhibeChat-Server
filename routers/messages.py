@@ -86,11 +86,14 @@ def mark_message_as_read(message_id: int, db: Session = Depends(get_db), current
 def delete_message(message_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     msg = db.query(models.Message).filter(models.Message.id == message_id).first()
     if not msg:
+        logger.warning(f"Delete failed: Message {message_id} not found. Requested by user {current_user.id}")
         raise HTTPException(status_code=404, detail="الرسالة غير موجودة")
         
     if msg.sender_id != current_user.id:
-        raise HTTPException(status_code=403, detail="غير مصرح بحذف هذه الرسالة")
+        logger.warning(f"Delete failed: User {current_user.id} unauthorized to delete message {message_id} sent by {msg.sender_id}")
+        raise HTTPException(status_code=403, detail="لا يمكنك حذف هذه الرسالة")
         
     db.delete(msg)
     db.commit()
+    logger.info(f"Message {message_id} deleted successfully by user {current_user.id}")
     return {"success": True}
