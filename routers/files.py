@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 import shutil
 import os
+import uuid
 from datetime import datetime
 
 from database import get_db
@@ -14,7 +15,8 @@ UPLOAD_DIR = "uploads"
 
 @router.post("/upload", response_model=schemas.FileRecordResponse)
 async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    file_path = os.path.join(UPLOAD_DIR, f"{datetime.now().timestamp()}_{file.filename}")
+    file_ext = os.path.splitext(file.filename)[1]
+    file_path = os.path.join(UPLOAD_DIR, f"{uuid.uuid4().hex}{file_ext}")
     
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)

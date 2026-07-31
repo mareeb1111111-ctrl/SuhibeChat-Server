@@ -30,7 +30,11 @@ Base.metadata.create_all(bind=engine)
 
 # إعداد السجلات لتظهر فوراً
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
+# إنشاء المجلد إذا لم يكن موجوداً
+os.makedirs("uploads", exist_ok=True)
 
+# تفعيل قراءة الملفات المرفوعة من الرابط مباشرة
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 app = FastAPI()
 
 app = FastAPI(title=settings.APP_NAME)

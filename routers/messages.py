@@ -7,6 +7,7 @@ import schemas
 import models
 from auth import get_current_user
 from sqlalchemy.sql import func
+from sqlalchemy.orm import joinedload
 from datetime import datetime
 import logging
 import mesibo_api
@@ -17,7 +18,7 @@ router = APIRouter(prefix="/api/messages", tags=["Messages"])
 
 @router.get("/{user_id}", response_model=schemas.MessageListResponse)
 def get_messages(user_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    messages = db.query(models.Message).filter(
+    messages = db.query(models.Message).options(joinedload(models.Message.file)).filter(
         or_(
             (models.Message.sender_id == current_user.id) & (models.Message.receiver_id == user_id),
             (models.Message.sender_id == user_id) & (models.Message.receiver_id == current_user.id)
@@ -64,7 +65,9 @@ def send_message(msg: schemas.MessageCreate, db: Session = Depends(get_db), curr
             group_id=msg.group_id or 0
         )
         
-        return db_msg
+        # Reload with file relation to ensure it is returned in the response
+        db_msg_reloaded = db.query(models.Message).options(joinedload(models.Message.file)).filter(models.Message.id == db_msg.id).first()
+        return db_msg_reloaded
     except Exception as e:
         logger.error(f"Error sending message: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))

@@ -116,3 +116,5 @@ class FileRecordResponse(BaseModel):
 class NotificationRegister(BaseModel):
     fcm_token: str
     device_type: Optional[str] = None
+
+MessageResponse.model_rebuild()
