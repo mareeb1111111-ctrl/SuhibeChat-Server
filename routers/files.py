@@ -23,6 +23,11 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
     if file_size > 20 * 1024 * 1024:
         os.remove(file_path)
         raise HTTPException(status_code=400, detail="حجم الملف يتجاوز الحد المسموح (20 ميغابايت)")
+        
+    allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp", "audio/mpeg", "audio/mp4", "audio/m4a", "audio/aac", "audio/x-m4a"]
+    if file.content_type not in allowed_types:
+        os.remove(file_path)
+        raise HTTPException(status_code=400, detail="نوع الملف غير مدعوم. فقط الصور والصوتيات مسموحة.")
     
     db_file = models.FileRecord(
         uploader_id=current_user.id,
