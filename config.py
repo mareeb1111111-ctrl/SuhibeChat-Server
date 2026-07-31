@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     
     # الإعدادات الأساسية
     debug: bool = False
-    allowed_hosts: Union[str, List[str]] = ["localhost", "127.0.0.1"]
+    allowed_hosts: List[str] = ["localhost", "127.0.0.1"]
     
     # OTP Settings
     OTP_EXPIRY: int = 300 # 5 minutes in seconds

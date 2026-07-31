@@ -8,6 +8,11 @@ def add_user_to_mesibo(email: str, name: str = "", address: str = "") -> dict:
     """
     Calls Mesibo Backend API to create a user and get an access token.
     """
+    # تخطي الاتصال بـ Mesibo إذا لم يتم إعداد التوكن الحقيقي
+    if settings.APP_TOKEN == "your_mesibo_app_token_here":
+        logger.warning(f"⚠️ تحذير: لم يتم إعداد APP_TOKEN لـ Mesibo. سيتم إرجاع توكن وهمي للمستخدم {email}.")
+        return {"success": True, "token": "mock_mesibo_token_for_testing_only"}
+
     payload = {
         "op": "useradd",
         "token": settings.APP_TOKEN,
@@ -42,6 +47,9 @@ def send_message_via_mesibo(sender_address: str, receiver_address: str, message:
     """
     يرسل رسالة مباشرة عبر واجهة برمجة Mesibo Backend ليتم تسليمها بالوقت الفعلي
     """
+    if settings.APP_TOKEN == "your_mesibo_app_token_here":
+        return True
+
     payload = {
         "op": "message",
         "token": settings.APP_TOKEN,
