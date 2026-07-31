@@ -33,6 +33,11 @@ async def send_otp_email(email: str, otp: str, name: str = None):
         use_tls = settings.SMTP_PORT == 465 or settings.SMTP_USE_TLS
         start_tls = settings.SMTP_PORT == 587
         
+        # تخطي محاولة الاتصال إذا لم يتم إعداد باسورد حقيقي لتجنب تعليق السيرفر
+        if settings.SMTP_PASSWORD == "your_app_password":
+            print(f"⚠️ تحذير: إعدادات SMTP الافتراضية قيد الاستخدام. لن يتم إرسال بريد حقيقي إلى {email}.")
+            return False
+
         await aiosmtplib.send(
             message,
             hostname=settings.SMTP_HOST,
@@ -41,6 +46,7 @@ async def send_otp_email(email: str, otp: str, name: str = None):
             password=settings.SMTP_PASSWORD,
             use_tls=use_tls,
             start_tls=start_tls,
+            timeout=5,
         )
         print(f"✅ تم إرسال البريد الإلكتروني بنجاح إلى: {email}")
         return True
@@ -74,6 +80,11 @@ async def send_invite_email(email: str, inviter_name: str = None):
         use_tls = settings.SMTP_PORT == 465 or settings.SMTP_USE_TLS
         start_tls = settings.SMTP_PORT == 587
         
+        # تخطي محاولة الاتصال إذا لم يتم إعداد باسورد حقيقي لتجنب تعليق السيرفر
+        if settings.SMTP_PASSWORD == "your_app_password":
+            print(f"⚠️ تحذير: إعدادات SMTP الافتراضية قيد الاستخدام. لن يتم إرسال بريد حقيقي إلى {email}.")
+            return False
+
         await aiosmtplib.send(
             message,
             hostname=settings.SMTP_HOST,
@@ -82,6 +93,7 @@ async def send_invite_email(email: str, inviter_name: str = None):
             password=settings.SMTP_PASSWORD,
             use_tls=use_tls,
             start_tls=start_tls,
+            timeout=5,
         )
         print(f"✅ تم إرسال دعوة بنجاح إلى: {email}")
         return True

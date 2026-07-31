@@ -1,7 +1,13 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import field_validator
+from typing import List, Union
 
 class Settings(BaseSettings):
     APP_NAME: str = "SuhibeChat Server"
+    
+    # الإعدادات الأساسية
+    debug: bool = False
+    allowed_hosts: Union[str, List[str]] = ["localhost", "127.0.0.1"]
     
     # OTP Settings
     OTP_EXPIRY: int = 300 # 5 minutes in seconds
@@ -32,6 +38,19 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 # 7 days
     
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    # تحويل النص المفصول بفواصل (من .env) إلى قائمة (List)
+    @field_validator("allowed_hosts", mode="before")
+    def parse_allowed_hosts(cls, v: Union[str, List[str]]) -> List[str]:
+        if isinstance(v, str):
+            return [host.strip() for host in v.split(",") if host.strip()]
+        return v
+    
+    # إعدادات Pydantic
+    # extra="ignore" تمنع انهيار السيرفر إذا كان هناك متغيرات إضافية في ملف .env
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
 
 settings = Settings()
