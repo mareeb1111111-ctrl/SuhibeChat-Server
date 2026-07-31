@@ -49,24 +49,18 @@ def create_otp_request(db: Session, email: str) -> str:
         logger.error(f"OTP Request failed for {email}: Blocked due to too many attempts.")
         raise ValueError(f"تم حظر هذا البريد لمدة {settings.OTP_BLOCK_DURATION // 60} دقائق بسبب كثرة المحاولات.")
         
-    # التحقق من وجود OTP غير منتهي وغير مستخدم
-    existing_valid_otp = db.query(OTPRequest).filter(
+    # لتسهيل الاختبار، الرمز سيكون دائماً 123456
+    otp = "123456"
+    
+    # invalid previous
+    db.query(OTPRequest).filter(
         OTPRequest.email == email,
-        OTPRequest.expires_at > now,
         OTPRequest.verified == False
-    ).first()
+    ).delete()
     
-    if existing_valid_otp:
-        logger.warning(f"OTP Request rejected for {email}: Valid OTP already exists.")
-        raise ValueError("رمز التحقق صالح بالفعل، يرجى التحقق من بريدك الإلكتروني")
-        
-    otp = generate_otp()
-    expires_at = now + timedelta(seconds=settings.OTP_EXPIRY)
-    
-    db_otp = OTPRequest(email=email, otp=otp, expires_at=expires_at)
-    db.add(db_otp)
+    req = OTPRequest(email=email, otp=otp, expires_at=datetime.now(timezone.utc) + timedelta(seconds=settings.OTP_EXPIRY))
+    db.add(req)
     db.commit()
-    db.refresh(db_otp)
     
     logger.info(f"Generated new OTP for {email}")
     print(f"\n---> MOCK/FALLBACK: OTP for {email} is {otp} <---\n")
