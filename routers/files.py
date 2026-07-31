@@ -24,8 +24,8 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
         os.remove(file_path)
         raise HTTPException(status_code=400, detail="حجم الملف يتجاوز الحد المسموح (20 ميغابايت)")
         
-    allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp", "audio/mpeg", "audio/mp4", "audio/m4a", "audio/aac", "audio/x-m4a"]
-    if file.content_type not in allowed_types:
+    allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp", "audio/mpeg", "audio/mp4", "audio/m4a", "audio/aac", "audio/x-m4a", "image/*", "audio/*"]
+    if file.content_type not in allowed_types and not file.content_type.startswith("image/") and not file.content_type.startswith("audio/"):
         os.remove(file_path)
         raise HTTPException(status_code=400, detail="نوع الملف غير مدعوم. فقط الصور والصوتيات مسموحة.")
     
