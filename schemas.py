@@ -18,6 +18,10 @@ class UserBase(BaseModel):
     name: Optional[str] = ""
     address: Optional[str] = ""
     avatar: Optional[str] = None
+    public_key: Optional[str] = None
+
+class PublicKeyRequest(BaseModel):
+    public_key: str
 
 class UserCreate(UserBase):
     pass

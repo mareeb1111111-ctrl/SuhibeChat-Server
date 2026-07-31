@@ -67,3 +67,9 @@ async def upload_avatar(file: UploadFile = File(...), db: Session = Depends(get_
     current_user.avatar = file_path
     db.commit()
     return {"success": True, "avatar": file_path}
+
+@router.post("/public-key")
+def update_public_key(request: schemas.PublicKeyRequest, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    current_user.public_key = request.public_key
+    db.commit()
+    return {"success": True, "message": "Public key updated successfully"}

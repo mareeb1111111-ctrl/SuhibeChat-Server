@@ -29,6 +29,7 @@ class User(Base):
     is_logged_in = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
     is_admin = Column(Boolean, default=False)
+    public_key = Column(String, nullable=True)
     
     # Relationships
     messages_sent = relationship("Message", foreign_keys="[Message.sender_id]", back_populates="sender", cascade="all, delete-orphan")
