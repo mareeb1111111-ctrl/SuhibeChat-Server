@@ -22,14 +22,14 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
         shutil.copyfileobj(file.file, buffer)
         
     file_size = os.path.getsize(file_path)
-    if file_size > 20 * 1024 * 1024:
+    if file_size > 50 * 1024 * 1024:
         os.remove(file_path)
-        raise HTTPException(status_code=400, detail="حجم الملف يتجاوز الحد المسموح (20 ميغابايت)")
+        raise HTTPException(status_code=400, detail="حجم الملف يتجاوز الحد المسموح (50 ميغابايت)")
         
-    allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp", "audio/mpeg", "audio/mp4", "audio/m4a", "audio/aac", "audio/x-m4a", "image/*", "audio/*"]
-    if file.content_type not in allowed_types and not file.content_type.startswith("image/") and not file.content_type.startswith("audio/"):
+    allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp", "audio/mpeg", "audio/mp4", "audio/m4a", "audio/aac", "audio/x-m4a", "video/mp4", "video/webm", "video/quicktime", "image/*", "audio/*", "video/*"]
+    if file.content_type not in allowed_types and not file.content_type.startswith("image/") and not file.content_type.startswith("audio/") and not file.content_type.startswith("video/"):
         os.remove(file_path)
-        raise HTTPException(status_code=400, detail="نوع الملف غير مدعوم. فقط الصور والصوتيات مسموحة.")
+        raise HTTPException(status_code=400, detail="نوع الملف غير مدعوم. فقط الصور، الصوتيات، والفيديوهات مسموحة.")
     
     db_file = models.FileRecord(
         uploader_id=current_user.id,
