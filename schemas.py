@@ -19,6 +19,10 @@ class UserBase(BaseModel):
     address: Optional[str] = ""
     avatar: Optional[str] = None
     public_key: Optional[str] = None
+    is_ghost_mode: Optional[bool] = False
+
+class UserGhostUpdate(BaseModel):
+    is_ghost_mode: bool
 
 class PublicKeyRequest(BaseModel):
     public_key: str

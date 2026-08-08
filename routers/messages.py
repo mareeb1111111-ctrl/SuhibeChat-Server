@@ -16,6 +16,19 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/messages", tags=["Messages"])
 
+@router.get("/chats")
+def get_chats(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    sent_msgs = db.query(models.Message.receiver_id).filter(models.Message.sender_id == current_user.id).all()
+    received_msgs = db.query(models.Message.sender_id).filter(models.Message.receiver_id == current_user.id).all()
+    
+    partner_ids = set([msg[0] for msg in sent_msgs] + [msg[0] for msg in received_msgs])
+    
+    if not partner_ids:
+        return {"users": [], "count": 0}
+        
+    users = db.query(models.User).filter(models.User.id.in_(partner_ids)).all()
+    return {"users": users, "count": len(users)}
+
 @router.get("/{user_id}", response_model=schemas.MessageListResponse)
 def get_messages(user_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     messages = db.query(models.Message).options(joinedload(models.Message.file)).filter(
@@ -81,8 +94,9 @@ def mark_message_as_read(message_id: int, db: Session = Depends(get_db), current
     if msg.receiver_id != current_user.id:
         raise HTTPException(status_code=403, detail="غير مصرح بتعديل هذه الرسالة")
         
-    msg.is_read = True
-    db.commit()
+    if not current_user.is_ghost_mode:
+        msg.is_read = True
+        db.commit()
     return {"success": True}
 
 @router.delete("/{message_id}")

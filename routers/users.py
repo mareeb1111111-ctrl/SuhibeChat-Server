@@ -25,7 +25,17 @@ def get_users(search: str = None, db: Session = Depends(get_db), current_user: m
 @router.get("/online", response_model=List[schemas.UserResponse])
 def get_online_users(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     five_mins_ago = datetime.now(timezone.utc) - timedelta(minutes=5)
-    return db.query(models.User).filter(models.User.last_login >= five_mins_ago).all()
+    return db.query(models.User).filter(
+        models.User.last_login >= five_mins_ago,
+        models.User.is_ghost_mode == False
+    ).all()
+
+@router.put("/me/ghost", response_model=schemas.UserResponse)
+def toggle_ghost_mode(request: schemas.UserGhostUpdate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    current_user.is_ghost_mode = request.is_ghost_mode
+    db.commit()
+    db.refresh(current_user)
+    return current_user
 
 @router.get("/me", response_model=schemas.UserResponse)
 def get_current_user_profile(current_user: models.User = Depends(get_current_user)):

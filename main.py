@@ -25,7 +25,14 @@ from routers import users, messages, groups, contacts, files, notifications, sta
 
 logger = logging.getLogger(__name__)
 
+from sqlalchemy import text
 # إنشاء الجداول في قاعدة البيانات
+try:
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE users ADD COLUMN is_ghost_mode BOOLEAN DEFAULT 0"))
+        conn.commit()
+except Exception:
+    pass # Column already exists
 Base.metadata.create_all(bind=engine)
 
 # إعداد السجلات لتظهر فوراً
