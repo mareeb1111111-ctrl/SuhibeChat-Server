@@ -45,14 +45,14 @@ def send_message(msg: schemas.MessageCreate, db: Session = Depends(get_db), curr
         logger.info(f"Received message payload from {current_user.email}: {msg.dict()}")
         
         is_encrypted = False
-        if msg.content.startswith("E2EE:") or msg.type == "public_key" or msg.type == "encrypted":
+        if msg.ciphertext.startswith("E2EE:") or msg.type == "public_key" or msg.type == "encrypted":
             is_encrypted = True
             
         db_msg = models.Message(
             sender_id=current_user.id,
             receiver_id=msg.receiver_id,
             group_id=msg.group_id,
-            content=msg.content,
+            ciphertext=msg.ciphertext,
             type=msg.type,
             file_id=msg.file_id,
             is_encrypted=is_encrypted,
@@ -75,7 +75,7 @@ def send_message(msg: schemas.MessageCreate, db: Session = Depends(get_db), curr
         mesibo_api.send_message_via_mesibo(
             sender_address=current_user.email,
             receiver_address=receiver_email,
-            message=msg.content,
+            message=msg.ciphertext,
             group_id=msg.group_id or 0
         )
         

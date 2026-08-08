@@ -52,7 +52,7 @@ class UserListResponse(BaseModel):
     count: int
 
 class MessageBase(BaseModel):
-    content: Optional[str] = ""
+    ciphertext: Optional[str] = ""
     message: Optional[str] = ""
     type: str = "text"
     file_id: Optional[int] = None
@@ -61,7 +61,7 @@ class MessageBase(BaseModel):
 
 class MessageCreate(BaseModel):
     receiver_id: int
-    content: str
+    ciphertext: str
     type: Optional[str] = "text"
     file_id: Optional[int] = None
     group_id: Optional[int] = None
@@ -126,5 +126,19 @@ class FileRecordResponse(BaseModel):
 class NotificationRegister(BaseModel):
     fcm_token: str
     device_type: Optional[str] = None
+
+class DeviceKeysUpload(BaseModel):
+    device_id: str
+    identity_public_key: str
+    signed_pre_key: str
+    one_time_pre_keys: Optional[str] = None
+
+class DeviceKeysResponse(DeviceKeysUpload):
+    id: int
+    user_id: int
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
 
 MessageResponse.model_rebuild()

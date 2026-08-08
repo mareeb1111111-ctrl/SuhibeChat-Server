@@ -26,6 +26,13 @@ def create_group(group: schemas.GroupCreate, db: Session = Depends(get_db), curr
     )
     db.add(member)
     
+    epoch = models.GroupEpoch(
+        group_id=db_group.id,
+        epoch_number=1,
+        encryption_state="{}"
+    )
+    db.add(epoch)
+    
     log = models.AuditLog(action="create_group", details=f"تم إنشاء مجموعة {group.name}")
     db.add(log)
     
@@ -82,6 +89,13 @@ def add_group_member(group_id: int, user_id: int, db: Session = Depends(get_db),
          
     new_member = models.GroupMember(group_id=group_id, user_id=user_id)
     db.add(new_member)
+    
+    # Create new epoch for key rotation
+    latest_epoch = db.query(models.GroupEpoch).filter(models.GroupEpoch.group_id == group_id).order_by(models.GroupEpoch.epoch_number.desc()).first()
+    new_epoch_num = (latest_epoch.epoch_number + 1) if latest_epoch else 1
+    new_epoch = models.GroupEpoch(group_id=group_id, epoch_number=new_epoch_num, encryption_state="{}")
+    db.add(new_epoch)
+    
     db.commit()
     return {"success": True, "message": "تم إضافة العضو"}
 
@@ -103,6 +117,13 @@ def remove_group_member(group_id: int, user_id: int, db: Session = Depends(get_d
          raise HTTPException(status_code=404, detail="العضو غير موجود")
          
     db.delete(member)
+    
+    # Create new epoch for key rotation
+    latest_epoch = db.query(models.GroupEpoch).filter(models.GroupEpoch.group_id == group_id).order_by(models.GroupEpoch.epoch_number.desc()).first()
+    new_epoch_num = (latest_epoch.epoch_number + 1) if latest_epoch else 1
+    new_epoch = models.GroupEpoch(group_id=group_id, epoch_number=new_epoch_num, encryption_state="{}")
+    db.add(new_epoch)
+    
     db.commit()
     return {"success": True}
 
@@ -130,11 +151,27 @@ def send_group_message(group_id: int, msg: schemas.MessageBase, db: Session = De
     db_msg = models.Message(
         sender_id=current_user.id,
         group_id=group_id,
-        content=msg.content,
+        ciphertext=msg.ciphertext,
         type=msg.type,
         file_id=msg.file_id
     )
     db.add(db_msg)
     db.commit()
     db.refresh(db_msg)
+    
+    from mesibo_api import send_message_via_mesibo
+    members = db.query(models.GroupMember).filter(models.GroupMember.group_id == group_id).all()
+    
+    for mem in members:
+        if mem.user_id != current_user.id:
+            user = db.query(models.User).filter(models.User.id == mem.user_id).first()
+            if user:
+                # Send individual ping via Mesibo to trigger Android BroadcastReceiver
+                send_message_via_mesibo(
+                    sender_address=current_user.email,
+                    receiver_address=user.email,
+                    message="[GroupPing]" + msg.ciphertext,
+                    group_id=0
+                )
+    
     return db_msg

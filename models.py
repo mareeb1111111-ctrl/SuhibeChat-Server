@@ -42,6 +42,7 @@ class User(Base):
     contact_requests_received = relationship("ContactRequest", foreign_keys="[ContactRequest.receiver_id]", back_populates="receiver", cascade="all, delete-orphan")
     files = relationship("FileRecord", back_populates="uploader", cascade="all, delete-orphan")
     notifications = relationship("NotificationToken", back_populates="user", cascade="all, delete-orphan")
+    devices = relationship("Device", back_populates="user", cascade="all, delete-orphan")
 
 class OTPRequest(Base):
     __tablename__ = "otp_requests"
@@ -69,7 +70,7 @@ class Message(Base):
     sender_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     receiver_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     group_id = Column(Integer, ForeignKey("groups.id"), nullable=True)
-    content = Column(String, nullable=False)
+    ciphertext = Column(String, nullable=False)
     type = Column(String, default=MessageType.TEXT.value) 
     file_id = Column(Integer, ForeignKey("files.id"), nullable=True)
     is_read = Column(Boolean, default=False)
@@ -81,6 +82,7 @@ class Message(Base):
     receiver = relationship("User", foreign_keys=[receiver_id], back_populates="messages_received")
     group = relationship("Group", back_populates="messages")
     file = relationship("FileRecord")
+    recipients = relationship("MessageRecipient", back_populates="message", cascade="all, delete-orphan")
 
 class Group(Base):
     __tablename__ = "groups"
@@ -94,6 +96,7 @@ class Group(Base):
     owner = relationship("User", back_populates="groups_owned")
     members = relationship("GroupMember", back_populates="group", cascade="all, delete-orphan")
     messages = relationship("Message", back_populates="group", cascade="all, delete-orphan")
+    epochs = relationship("GroupEpoch", back_populates="group", cascade="all, delete-orphan")
 
 class GroupMember(Base):
     __tablename__ = "group_members"
@@ -152,3 +155,41 @@ class NotificationToken(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     user = relationship("User", back_populates="notifications")
+
+class Device(Base):
+    __tablename__ = "devices"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    device_id = Column(String, unique=True, index=True, nullable=False)
+    identity_public_key = Column(String, nullable=False)
+    signed_pre_key = Column(String, nullable=False)
+    one_time_pre_keys = Column(String, nullable=True) 
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_active = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="devices")
+
+class GroupEpoch(Base):
+    __tablename__ = "group_epochs"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    group_id = Column(Integer, ForeignKey("groups.id"), nullable=False)
+    epoch_number = Column(Integer, nullable=False)
+    encryption_state = Column(String, nullable=True) 
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    group = relationship("Group", back_populates="epochs")
+
+class MessageRecipient(Base):
+    __tablename__ = "message_recipients"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    message_id = Column(Integer, ForeignKey("messages.id"), nullable=False)
+    device_id = Column(Integer, ForeignKey("devices.id"), nullable=False)
+    encrypted_key = Column(String, nullable=False)
+    delivered_at = Column(DateTime(timezone=True), nullable=True)
+    read_at = Column(DateTime(timezone=True), nullable=True)
+
+    message = relationship("Message", back_populates="recipients")
+    device = relationship("Device")
