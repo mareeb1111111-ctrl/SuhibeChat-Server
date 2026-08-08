@@ -57,6 +57,7 @@ class MessageBase(BaseModel):
     type: str = "text"
     file_id: Optional[int] = None
     is_encrypted: Optional[bool] = False
+    burn_timer: Optional[int] = 0
 
 class MessageCreate(BaseModel):
     receiver_id: int
@@ -64,6 +65,7 @@ class MessageCreate(BaseModel):
     type: Optional[str] = "text"
     file_id: Optional[int] = None
     group_id: Optional[int] = None
+    burn_timer: Optional[int] = 0
 
 class MessageResponse(MessageBase):
     id: int

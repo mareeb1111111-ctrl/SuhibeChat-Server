@@ -33,6 +33,12 @@ try:
         conn.commit()
 except Exception:
     pass # Column already exists
+try:
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE messages ADD COLUMN burn_timer INTEGER DEFAULT 0"))
+        conn.commit()
+except Exception:
+    pass # Column already exists
 Base.metadata.create_all(bind=engine)
 
 # إعداد السجلات لتظهر فوراً

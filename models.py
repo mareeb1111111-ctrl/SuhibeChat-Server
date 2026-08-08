@@ -74,6 +74,7 @@ class Message(Base):
     file_id = Column(Integer, ForeignKey("files.id"), nullable=True)
     is_read = Column(Boolean, default=False)
     is_encrypted = Column(Boolean, default=False)
+    burn_timer = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     sender = relationship("User", foreign_keys=[sender_id], back_populates="messages_sent")

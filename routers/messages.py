@@ -55,7 +55,8 @@ def send_message(msg: schemas.MessageCreate, db: Session = Depends(get_db), curr
             content=msg.content,
             type=msg.type,
             file_id=msg.file_id,
-            is_encrypted=is_encrypted
+            is_encrypted=is_encrypted,
+            burn_timer=msg.burn_timer
         )
         db.add(db_msg)
         
@@ -107,8 +108,9 @@ def delete_message(message_id: int, db: Session = Depends(get_db), current_user:
         raise HTTPException(status_code=404, detail="الرسالة غير موجودة")
         
     if msg.sender_id != current_user.id:
-        logger.warning(f"Delete failed: User {current_user.id} unauthorized to delete message {message_id} sent by {msg.sender_id}")
-        raise HTTPException(status_code=403, detail="لا يمكنك حذف هذه الرسالة")
+        if not (msg.receiver_id == current_user.id and msg.burn_timer != None and msg.burn_timer > 0):
+            logger.warning(f"Delete failed: User {current_user.id} unauthorized to delete message {message_id} sent by {msg.sender_id}")
+            raise HTTPException(status_code=403, detail="لا يمكنك حذف هذه الرسالة")
         
     db.delete(msg)
     db.commit()
