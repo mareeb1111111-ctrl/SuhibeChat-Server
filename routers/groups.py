@@ -127,6 +127,20 @@ def remove_group_member(group_id: int, user_id: int, db: Session = Depends(get_d
     db.commit()
     return {"success": True}
 
+@router.get("/{group_id}/members", response_model=List[schemas.UserResponse])
+def get_group_members(group_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    member = db.query(models.GroupMember).filter(
+        models.GroupMember.group_id == group_id,
+        models.GroupMember.user_id == current_user.id
+    ).first()
+    if not member:
+        raise HTTPException(status_code=403, detail="لست عضواً في هذه المجموعة")
+        
+    memberships = db.query(models.GroupMember).filter(models.GroupMember.group_id == group_id).all()
+    user_ids = [m.user_id for m in memberships]
+    users = db.query(models.User).filter(models.User.id.in_(user_ids)).all()
+    return users
+
 @router.get("/{group_id}/messages", response_model=List[schemas.MessageResponse])
 def get_group_messages(group_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     member = db.query(models.GroupMember).filter(
