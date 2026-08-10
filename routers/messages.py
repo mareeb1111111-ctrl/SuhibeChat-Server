@@ -22,7 +22,7 @@ def get_unread_messages(db: Session = Depends(get_db), current_user: models.User
         models.Message.receiver_id == current_user.id,
         models.Message.is_read == False
     ).order_by(models.Message.created_at.asc()).all()
-    return {"messages": messages}
+    return {"messages": messages, "count": len(messages)}
 
 @router.get("/chats")
 def get_chats(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
