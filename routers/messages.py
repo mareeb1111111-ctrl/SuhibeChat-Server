@@ -16,6 +16,14 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/messages", tags=["Messages"])
 
+@router.get("/unread", response_model=schemas.MessageListResponse)
+def get_unread_messages(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    messages = db.query(models.Message).options(joinedload(models.Message.file)).filter(
+        models.Message.receiver_id == current_user.id,
+        models.Message.is_read == False
+    ).order_by(models.Message.created_at.asc()).all()
+    return {"messages": messages}
+
 @router.get("/chats")
 def get_chats(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     sent_msgs = db.query(models.Message.receiver_id).filter(models.Message.sender_id == current_user.id).all()
@@ -30,13 +38,17 @@ def get_chats(db: Session = Depends(get_db), current_user: models.User = Depends
     return {"users": users, "count": len(users)}
 
 @router.get("/{user_id}", response_model=schemas.MessageListResponse)
-def get_messages(user_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    messages = db.query(models.Message).options(joinedload(models.Message.file)).filter(
+def get_messages(user_id: int, after_id: int = None, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    query = db.query(models.Message).options(joinedload(models.Message.file)).filter(
         or_(
             (models.Message.sender_id == current_user.id) & (models.Message.receiver_id == user_id),
             (models.Message.sender_id == user_id) & (models.Message.receiver_id == current_user.id)
         )
-    ).order_by(models.Message.created_at.asc()).all()
+    )
+    if after_id is not None:
+        query = query.filter(models.Message.id > after_id)
+        
+    messages = query.order_by(models.Message.created_at.asc()).all()
     return {"messages": messages, "count": len(messages)}
 
 @router.post("", response_model=schemas.MessageResponse)
