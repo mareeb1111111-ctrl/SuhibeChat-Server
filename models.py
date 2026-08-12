@@ -193,3 +193,30 @@ class MessageRecipient(Base):
 
     message = relationship("Message", back_populates="recipients")
     device = relationship("Device")
+
+class Status(Base):
+    __tablename__ = "statuses"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    type = Column(String, default="text")
+    content = Column(String, nullable=False)
+    encryption_key = Column(String, nullable=True)
+    is_anonymous = Column(Boolean, default=False)
+    allow_screenshot = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    
+    user = relationship("User")
+    views = relationship("StatusView", back_populates="status", cascade="all, delete-orphan")
+
+class StatusView(Base):
+    __tablename__ = "status_views"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    status_id = Column(Integer, ForeignKey("statuses.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    viewed_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    status = relationship("Status", back_populates="views")
+    user = relationship("User")

@@ -21,7 +21,7 @@ import auth
 import mesibo_api
 import system_stats
 from smtp import send_otp_email, send_invite_email
-from routers import users, messages, groups, contacts, files, notifications, stats, keys
+from routers import users, messages, groups, contacts, files, notifications, stats, keys, statuses
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +83,7 @@ app.include_router(files.router)
 app.include_router(notifications.router)
 app.include_router(stats.router)
 app.include_router(keys.router)
+app.include_router(statuses.router)
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def get_dashboard():

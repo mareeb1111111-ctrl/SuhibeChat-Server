@@ -184,7 +184,7 @@ def send_group_message(group_id: int, msg: schemas.MessageBase, db: Session = De
                 send_message_via_mesibo(
                     sender_address=current_user.email,
                     receiver_address=user.email,
-                    message="[GroupPing]" + msg.ciphertext,
+                    message="[GroupPing]" + str(group_id) + ":" + msg.ciphertext,
                     group_id=0
                 )
     

@@ -141,4 +141,41 @@ class DeviceKeysResponse(DeviceKeysUpload):
     class Config:
         from_attributes = True
 
+class StatusCreate(BaseModel):
+    type: str = "text"
+    content: str
+    encryption_key: Optional[str] = None
+    is_anonymous: Optional[bool] = False
+    allow_screenshot: Optional[bool] = True
+    duration_hours: Optional[int] = 24
+
+class StatusViewResponse(BaseModel):
+    id: int
+    user_id: int
+    viewed_at: datetime
+    user: Optional[UserResponse] = None
+
+    class Config:
+        from_attributes = True
+
+class StatusResponse(BaseModel):
+    id: int
+    user_id: int
+    type: str
+    content: str
+    encryption_key: Optional[str] = None
+    is_anonymous: bool
+    allow_screenshot: bool
+    created_at: datetime
+    expires_at: datetime
+    user: Optional[UserResponse] = None
+    views: Optional[List[StatusViewResponse]] = []
+
+    class Config:
+        from_attributes = True
+
+class StatusFeedResponse(BaseModel):
+    my_statuses: List[StatusResponse]
+    contacts_statuses: List[StatusResponse]
+
 MessageResponse.model_rebuild()
