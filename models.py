@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Enum
 from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 import enum
 from database import Base
 
@@ -199,7 +199,12 @@ class Status(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    parent_id = Column(Integer, ForeignKey("statuses.id"), nullable=True) # For Updates
     type = Column(String, default="text")
+    moment_type = Column(String, default="WORK")
+    audience = Column(String, default="FRIENDS")
+    duration_type = Column(String, default="FIXED_DURATION")
+    duration_value = Column(String, nullable=True)
     content = Column(String, nullable=False)
     encryption_key = Column(String, nullable=True)
     is_anonymous = Column(Boolean, default=False)
@@ -209,6 +214,7 @@ class Status(Base):
     
     user = relationship("User")
     views = relationship("StatusView", back_populates="status", cascade="all, delete-orphan")
+    updates = relationship("Status", backref=backref("parent", remote_side=[id]), cascade="all, delete-orphan")
 
 class StatusView(Base):
     __tablename__ = "status_views"

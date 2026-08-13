@@ -147,7 +147,11 @@ class StatusCreate(BaseModel):
     encryption_key: Optional[str] = None
     is_anonymous: Optional[bool] = False
     allow_screenshot: Optional[bool] = True
-    duration_hours: Optional[int] = 24
+    parent_id: Optional[int] = None
+    moment_type: Optional[str] = "WORK"
+    audience: Optional[str] = "FRIENDS"
+    duration_type: Optional[str] = "FIXED_DURATION"
+    duration_value: Optional[str] = None
 
 class StatusViewResponse(BaseModel):
     id: int
@@ -161,7 +165,12 @@ class StatusViewResponse(BaseModel):
 class StatusResponse(BaseModel):
     id: int
     user_id: int
+    parent_id: Optional[int] = None
     type: str
+    moment_type: Optional[str] = "WORK"
+    audience: Optional[str] = "FRIENDS"
+    duration_type: Optional[str] = "FIXED_DURATION"
+    duration_value: Optional[str] = None
     content: str
     encryption_key: Optional[str] = None
     is_anonymous: bool
@@ -170,6 +179,7 @@ class StatusResponse(BaseModel):
     expires_at: datetime
     user: Optional[UserResponse] = None
     views: Optional[List[StatusViewResponse]] = []
+    updates: Optional[List['StatusResponse']] = []
 
     class Config:
         from_attributes = True
@@ -179,3 +189,4 @@ class StatusFeedResponse(BaseModel):
     contacts_statuses: List[StatusResponse]
 
 MessageResponse.model_rebuild()
+StatusResponse.model_rebuild()

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List
 from datetime import datetime, timedelta, timezone
 
@@ -20,10 +20,23 @@ def create_status(
     current_user: User = Depends(get_current_user)
 ):
     now = datetime.now(timezone.utc)
-    expires_at = now + timedelta(hours=status_in.duration_hours)
+    
+    if status_in.duration_type == "FIXED_DURATION" and status_in.duration_value:
+        try:
+            hours = int(status_in.duration_value)
+            expires_at = now + timedelta(hours=hours)
+        except ValueError:
+            expires_at = now + timedelta(hours=24)
+    else:
+        expires_at = now + timedelta(hours=24) # Default fallback
     
     new_status = Status(
         user_id=current_user.id,
+        parent_id=status_in.parent_id,
+        moment_type=status_in.moment_type,
+        audience=status_in.audience,
+        duration_type=status_in.duration_type,
+        duration_value=status_in.duration_value,
         type=status_in.type,
         content=status_in.content,
         encryption_key=status_in.encryption_key,
@@ -45,21 +58,23 @@ def get_status_feed(
 ):
     now = datetime.now(timezone.utc)
     
-    # 1. My active statuses
-    my_statuses = db.query(Status).filter(
+    # 1. My active root statuses
+    my_statuses = db.query(Status).options(joinedload(Status.updates)).filter(
         Status.user_id == current_user.id,
-        Status.expires_at > now
+        Status.expires_at > now,
+        Status.parent_id.is_(None)
     ).order_by(Status.created_at.desc()).all()
     
-    # 2. Contacts active statuses
+    # 2. Contacts active root statuses
     # Get all my contacts
     contacts = db.query(Contact).filter(Contact.user_id == current_user.id).all()
     contact_ids = [c.contact_id for c in contacts]
     
     if contact_ids:
-        contacts_statuses = db.query(Status).filter(
+        contacts_statuses = db.query(Status).options(joinedload(Status.updates)).filter(
             Status.user_id.in_(contact_ids),
-            Status.expires_at > now
+            Status.expires_at > now,
+            Status.parent_id.is_(None)
         ).order_by(Status.created_at.desc()).all()
     else:
         contacts_statuses = []
@@ -95,3 +110,18 @@ def view_status(
         db.commit()
         
     return {"success": True, "message": "View recorded"}
+
+@router.get("/{status_id}", response_model=schemas.StatusResponse)
+def get_status_by_id(
+    status_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    status_obj = db.query(Status).options(joinedload(Status.updates)).filter(
+        Status.id == status_id
+    ).first()
+    
+    if not status_obj:
+        raise HTTPException(status_code=404, detail="Status not found")
+        
+    return status_obj
