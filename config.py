@@ -27,7 +27,7 @@ class Settings(BaseSettings):
 
     # SMTP Settings
     SMTP_HOST: str = "smtp.gmail.com"
-    SMTP_PORT: int = 587
+    SMTP_PORT: int = 465
     SMTP_USER: str = "your_email@gmail.com"
     SMTP_PASSWORD: str = "your_app_password"
     SMTP_FROM: str = "your_email@gmail.com"

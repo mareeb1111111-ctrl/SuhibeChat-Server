@@ -16,8 +16,11 @@ def upload_keys(keys_data: schemas.DeviceKeysUpload, db: Session = Depends(get_d
     ).first()
     
     if device:
-        # Update existing keys and reassign to current user if changed
-        device.user_id = current_user.id
+        # Prevent IDOR: Only allow the owner of the device to update it
+        if device.user_id != current_user.id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Device ID belongs to another user")
+            
+        # Update existing keys
         device.identity_public_key = keys_data.identity_public_key
         device.signed_pre_key = keys_data.signed_pre_key
         device.one_time_pre_keys = keys_data.one_time_pre_keys

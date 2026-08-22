@@ -103,6 +103,35 @@ async def get_dashboard_js():
         return Response(content=f.read(), media_type="application/javascript")
 
 
+@app.get("/api/users")
+def get_users(db: Session = Depends(get_db)):
+    users = db.query(User).all()
+    user_list = []
+    for user in users:
+        user_list.append({
+            "id": user.id,
+            "name": user.name or "Unnamed",
+            "email": user.email,
+            "profile_picture": user.avatar,
+            "online_status": True,
+            "last_seen": "2026-08-21T10:30:00"
+        })
+    return {"status": "success", "users": user_list}
+
+import shutil
+from fastapi import UploadFile, File
+
+@app.post("/api/upload")
+async def upload_file(file: UploadFile = File(...)):
+    file_location = f"uploads/{file.filename}"
+    with open(file_location, "wb+") as file_object:
+        shutil.copyfileobj(file.file, file_object)
+    
+    # Return the relative URL (or full URL depending on the client)
+    # The client can append it to the BASE_URL
+    file_url = f"/uploads/{file.filename}"
+    return {"status": "success", "file_url": file_url}
+
 @app.post("/api/request-otp", response_model=dict)
 async def request_otp(req: schemas.OTPRequestBase, db: Session = Depends(get_db)):
     try:
@@ -195,6 +224,38 @@ async def register(req: schemas.UserRegister, db: Session = Depends(get_db)):
         logger.error(f"Unexpected Registration Error for {req.email}: {str(e)}")
         raise HTTPException(status_code=500, detail="حدث خطأ غير متوقع أثناء التسجيل.")
 
+@app.post("/api/add-phone", response_model=schemas.UserResponse)
+async def add_phone(req: schemas.PhoneAddRequest, db: Session = Depends(get_db), current_user: User = Depends(auth.get_current_user)):
+    try:
+        # Check if phone is already used by another user
+        existing_user = db.query(User).filter(User.phone == req.phone, User.id != current_user.id).first()
+        if existing_user:
+            raise HTTPException(status_code=400, detail="This phone number is already registered to another user.")
+            
+        current_user.phone = req.phone
+        db.commit()
+        db.refresh(current_user)
+        return current_user
+    except Exception as e:
+        logger.error(f"Error adding phone for {current_user.email}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to add phone number.")
+
+@app.post("/api/sync-contacts", response_model=schemas.SyncContactsResponse)
+async def sync_contacts(req: schemas.SyncContactsRequest, db: Session = Depends(get_db), current_user: User = Depends(auth.get_current_user)):
+    try:
+        if not req.contacts:
+            return {"matched_users": []}
+            
+        matched_users = db.query(User).filter(User.phone.in_(req.contacts)).all()
+        
+        # Don't return the user themselves in matched contacts
+        matched_users = [u for u in matched_users if u.id != current_user.id]
+        
+        return {"matched_users": matched_users}
+    except Exception as e:
+        logger.error(f"Error syncing contacts for {current_user.email}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to sync contacts.")
+
 def get_active_users_count(db: Session) -> int:
     five_mins_ago = datetime.now(timezone.utc) - timedelta(minutes=5)
     return db.query(User).filter(User.last_login >= five_mins_ago).count()
@@ -209,18 +270,18 @@ async def mesibo_api_handler(request: Request):
     
     try:
         data = await request.json()
-        logger.info(f"JSON Payload: {data}")
+        logger.info("JSON Payload: <redacted for security>")
     except Exception:
         try:
             form = await request.form()
             if form:
-                logger.info(f"Form Payload: {dict(form)}")
+                logger.info("Form Payload: <redacted for security>")
             else:
                 body = await request.body()
-                logger.info(f"Raw Body: {body}")
+                logger.info("Raw Body: <redacted for security>")
         except Exception:
             body = await request.body()
-            logger.info(f"Raw Body: {body}")
+            logger.info("Raw Body: <redacted for security>")
             
     logger.info("========== MESIBO REQUEST END ==========")
     

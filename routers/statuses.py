@@ -74,7 +74,8 @@ def get_status_feed(
         contacts_statuses = db.query(Status).options(joinedload(Status.updates)).filter(
             Status.user_id.in_(contact_ids),
             Status.expires_at > now,
-            Status.parent_id.is_(None)
+            Status.parent_id.is_(None),
+            Status.audience.in_(["PUBLIC", "FRIENDS"])
         ).order_by(Status.created_at.desc()).all()
     else:
         contacts_statuses = []
@@ -124,4 +125,18 @@ def get_status_by_id(
     if not status_obj:
         raise HTTPException(status_code=404, detail="Status not found")
         
+    # Authorization logic
+    if status_obj.user_id != current_user.id:
+        now = datetime.now(timezone.utc)
+        if status_obj.expires_at.replace(tzinfo=timezone.utc) < now:
+             raise HTTPException(status_code=403, detail="Status has expired")
+             
+        if status_obj.audience not in ["PUBLIC", "FRIENDS"]:
+            raise HTTPException(status_code=403, detail="Not authorized to view this status")
+            
+        if status_obj.audience == "FRIENDS":
+            contact = db.query(Contact).filter(Contact.user_id == status_obj.user_id, Contact.contact_id == current_user.id).first()
+            if not contact:
+                raise HTTPException(status_code=403, detail="Not authorized to view this status")
+                
     return status_obj

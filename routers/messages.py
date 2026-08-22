@@ -54,13 +54,42 @@ def get_messages(user_id: int, after_id: int = None, db: Session = Depends(get_d
 @router.post("", response_model=schemas.MessageResponse)
 def send_message(msg: schemas.MessageCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     try:
-        logger.info(f"Received message payload from {current_user.email}: {msg.dict()}")
-        
         is_encrypted = False
-        if msg.ciphertext.startswith("E2EE:") or msg.type == "public_key" or msg.type == "encrypted":
+        import base64
+        prefixes = ["E2EE:", "MSG:", "PREKEY:", "E2EE_GRP:", "GROUP_KEY_REQ:", "SENDERKEY:"]
+        
+        if msg.type == "public_key" or msg.type == "encrypted":
             is_encrypted = True
+        else:
+            for p in prefixes:
+                if msg.ciphertext.startswith(p):
+                    b64_part = msg.ciphertext[len(p):]
+                    try:
+                        decoded = base64.b64decode(b64_part, validate=True)
+                        # Signal protocol version 3 ciphertexts usually start with 0x33 or similar.
+                        # However, to maintain server blindness strictly without risking false positives,
+                        # we ensure the base64 is cryptographically valid and non-empty.
+                        if len(decoded) > 0:
+                            is_encrypted = True
+                            break
+                    except Exception:
+                        pass
+                        
+        if not is_encrypted:
+            from fastapi import HTTPException, status
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Message rejected: Invalid E2EE format or plaintext detected")
+            
+        if msg.client_message_id:
+            existing_msg = db.query(models.Message).filter(
+                models.Message.client_message_id == msg.client_message_id,
+                models.Message.sender_id == current_user.id
+            ).first()
+            if existing_msg:
+                logger.info(f"Duplicate message detected: client_message_id={msg.client_message_id}")
+                return db.query(models.Message).options(joinedload(models.Message.file)).filter(models.Message.id == existing_msg.id).first()
             
         db_msg = models.Message(
+            client_message_id=msg.client_message_id,
             sender_id=current_user.id,
             receiver_id=msg.receiver_id,
             group_id=msg.group_id,
@@ -71,11 +100,6 @@ def send_message(msg: schemas.MessageCreate, db: Session = Depends(get_db), curr
             burn_timer=msg.burn_timer
         )
         db.add(db_msg)
-        
-        if not is_encrypted:
-            log = models.AuditLog(action="send_message", details=f"رسالة من {current_user.email}")
-            db.add(log)
-        
         db.commit()
         db.refresh(db_msg)
         

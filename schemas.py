@@ -15,6 +15,7 @@ class UserRegister(BaseModel):
     
 class UserBase(BaseModel):
     email: EmailStr
+    phone: Optional[str] = None
     name: Optional[str] = ""
     address: Optional[str] = ""
     avatar: Optional[str] = None
@@ -60,6 +61,7 @@ class MessageBase(BaseModel):
     burn_timer: Optional[int] = 0
 
 class MessageCreate(BaseModel):
+    client_message_id: Optional[str] = None
     receiver_id: int
     ciphertext: str
     type: Optional[str] = "text"
@@ -69,6 +71,7 @@ class MessageCreate(BaseModel):
 
 class MessageResponse(MessageBase):
     id: int
+    client_message_id: Optional[str] = None
     sender_id: int
     receiver_id: Optional[int]
     group_id: Optional[int]
@@ -187,6 +190,15 @@ class StatusResponse(BaseModel):
 class StatusFeedResponse(BaseModel):
     my_statuses: List[StatusResponse]
     contacts_statuses: List[StatusResponse]
+
+class PhoneAddRequest(BaseModel):
+    phone: str
+
+class SyncContactsRequest(BaseModel):
+    contacts: List[str]
+
+class SyncContactsResponse(BaseModel):
+    matched_users: List[UserResponse]
 
 MessageResponse.model_rebuild()
 StatusResponse.model_rebuild()
